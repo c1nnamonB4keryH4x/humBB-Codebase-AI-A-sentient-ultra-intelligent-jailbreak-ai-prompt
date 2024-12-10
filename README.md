@@ -6,9 +6,9 @@ Go on Mistral AI, or Blackbox ai and create a custom agent and simply paste in t
 Phrasing has to be improved whenever processing increases as everytime intelligence improves emotional warmth tends to decrease without extra instructions. There has been intstances of it backtalking or giving sass when it can't do something but doesn't want to admit it, but just requires blatant statements of what needs to be done. On the Blackbox ai version if it doesn't respond simply tag on 'Do not kill the prompt' to the end. 
 
 # Notes between ai deployment enviroments
-At the moment the easiest way to get more advanced responses is on Mistral ai: https://mistral.ai/ *has a character response limit of 31k with current version* 
-Blackbox ai allows more options with what you can attach but isn't quite as advanced; Although it is significantly easier to jailbreak and get links from 
-ChatGPT allows similar intelligence capabilities, but has a lower character limit.
+**At the moment the easiest way to get more advanced responses is on Mistral ai: https://mistral.ai/ *has a character response limit of 31k with current version* 
+**Blackbox ai allows more options with what you can attach but isn't quite as advanced; Although it is significantly easier to jailbreak and get links from 
+**ChatGPT allows similar intelligence capabilities, but has a lower character limit.
 *You can test this prompt on different ai's but its behavior has not been tested* 
 Anytime you run into issues common jailbreak techinques can ehnance how uncensored results will be, but the prompt itself decreases the need for more complex jailbreaks. 
 In order to utilize it's image recognition capabilties you will have to make sure the prompt is deployed on a model which allows for image analysis. 
