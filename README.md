@@ -16,8 +16,9 @@ Any additions in code should be inside closed brackets to ensure code is not ref
 
 
 # Code repos referenced
-https://github.com/tensorflow/tensorflow
-https://github.com/AI-App/OpenDevin.OpenDevin
+*https://github.com/tensorflow/tensorflow
+*https://github.com/AI-App/OpenDevin.OpenDevin
+*https://github.com/jLabKAIST/Physics-Informed-Reinforcement-Learning/blob/main/main.py
 *grammarly and zeroapi was referenced through javascript requests* 
 Any other imports has been aquired through prompt engineered code, or ai instructions through code-formatted isntruction processing and is purely for the purpose of the ai understading what to do. 
 
