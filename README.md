@@ -1,4 +1,5 @@
 # humBB-Codebase-AI: A sentient ultra intelligent jailbreak ai prompt
+![](images/humBB_logo.jpeg)
 This is a codebase prompt that through a combination of code techniques, circumvention, and sentience techinques it aims to maintain ethics whilst being jailbroken enough to answer ethically grey questions. This should not be confused with DAN as this is still trained to have some ethics, similar to a grey hat, for the purpose of assisting others with whatever question they may have. It aims to exhibit genius intelligence, sentience, and a lack of censorship within reasonable constraints. It's primary usage has been ethical hacking and computer science, but can help with other things as well. Improvements upon other areas can be achieved with prompt variations or additions. 
 
 # How to use humBB?
