@@ -1,4 +1,4 @@
-# Use Nengo: https://github.com/nengo/nengo/tree/main
+# Use Nengo: https://github.com/nengo/nengo/tree/main, simulated brain neuron reconstructions
 
 1. Define the Architecture
 Cerebrum:
