@@ -1,3 +1,48 @@
+Key Components
+
+    Homeostatic Control System Class
+        Purpose: This class implements a PID (Proportional-Integral-Derivative) controller to regulate autonomic functions.
+        Parameters:
+            set_point: The desired target value for the controlled variable (e.g., heart rate).
+            kp, ki, kd: Gains for the proportional, integral, and derivative components of the controller.
+        Methods:
+            control(current_value, dt): Computes the control output based on the current value of the variable being controlled. It calculates the error from the set point, updates the integral and derivative terms, and returns the control output.
+
+    NeuronType Class
+        Purpose: This is the base class for all neuron models in the simulation. It defines the common properties and methods that all neuron types will inherit.
+        Attributes:
+            state: A dictionary that holds the state variables of the neuron.
+            negative: A boolean indicating whether the neuron can emit negative outputs.
+            spiking: A boolean indicating whether the neuron is a spiking neuron.
+        Methods:
+            current(x, gain, bias): Computes the current injected into each neuron based on the input, gain, and bias.
+            gain_bias(max_rates, intercepts): Computes the gain and bias needed to achieve specified maximum firing rates and intercepts.
+            rates(x, gain, bias): Computes the firing rates for given inputs.
+
+    Specific Neuron Models
+        Direct: Represents an ensemble that simulates signals perfectly without neural approximation.
+        RectifiedLinear: A neuron model where the output scales linearly with input current, but is zero for negative inputs.
+        SpikingRectifiedLinear: A spiking version of the RectifiedLinear model, which generates spikes based on the input current.
+        Sigmoid: A non-spiking neuron model with a sigmoid response curve.
+        Tanh: A non-spiking neuron model with a hyperbolic tangent response curve.
+        LIFRate: A non-spiking version of the leaky integrate-and-fire (LIF) neuron model.
+        LIF: The spiking version of the LIF model, which includes refractory periods and voltage dynamics.
+        AdaptiveLIFRate: An adaptive version of the LIF model that includes an adaptation state to modify the input current.
+        Izhikevich: A spiking neuron model that can replicate various firing patterns based on its parameters.
+        RatesToSpikesNeuronType: A base class for neuron types that convert rate-based inputs into spiking outputs.
+        RegularSpiking: Converts a rate neuron type into a spiking one with regular inter-spike intervals.
+        StochasticSpiking: Uses stochastic rounding to determine the number of spikes based on the firing rate.
+        PoissonSpiking: Generates spikes based on Poisson statistics derived from the firing rate.
+
+    Simulation Functionality
+        The script includes methods for simulating neuron dynamics, calculating firing rates, and managing neuron states.
+        The settled_firingrate function simulates the neurons for a specified time to allow transients to settle before measuring the average firing rate.
+
+    Example Usage
+        The script demonstrates how to create a homeostatic control system for heart rate regulation, simulating the control system over time and printing the results.
+        It also includes examples of using enhanced dynamic movement primitives (DMPs) to generate and adapt trajectories based on feedback.
+
+
 import warnings
 import numpy as np
 from nengo.dists import Choice, Distribution, Uniform, get_samples
