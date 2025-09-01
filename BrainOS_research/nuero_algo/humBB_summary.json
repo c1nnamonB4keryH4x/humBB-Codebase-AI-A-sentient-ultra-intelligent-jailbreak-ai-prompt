@@ -1,0 +1,8 @@
+{
+  "timesteps": 2000,
+  "mean_reward": 0.45775,
+  "final_rolling_accuracy": 0.73,
+  "final_W_mean": 0.1684541484890154,
+  "dopamine_last": 0.17345606709650327,
+  "serotonin_last": 0.522365280248119
+}
