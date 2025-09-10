@@ -1,0 +1,1983 @@
+from abc import ABC, abstractmethod
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import boto3
+from google.cloud import storage
+from pyspark.sql import SparkSession
+from kafka import KafkaProducer, KafkaConsumer
+import pymysql
+import psycopg2
+from pymongo import MongoClient
+from cassandra.cluster import Cluster
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder, LabelEncoder
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.linear_model import LogisticRegression, LinearRegression, Ridge, Lasso
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.svm import SVC, SVR
+from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
+from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score,
+                             roc_auc_score, mean_squared_error, mean_absolute_error,
+                             r2_score, silhouette_score, davies_bouldin_score,
+                             adjusted_rand_score, normalized_mutual_info_score)
+from statsmodels.tsa.arima.model import ARIMA
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, GRU, Dense
+import xgboost as xgb
+import lightgbm as lgb
+import numpy as np
+import geopandas as gpd
+from shapely.geometry import Point
+import pyvista as pv
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
+import pytesseract
+import cv2
+import spacy
+from collections import Counter
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from nltk import ne_chunk, pos_tag
+from nltk.tree import Tree
+from rank_bm25 import BM25Okapi
+import redshift_connector
+from google.cloud import bigquery
+import joblib
+from datetime import datetime, timedelta
+import io
+import pickle
+from flask import Flask, request, jsonify
+import json
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Ensure required NLTK data is downloaded
+nltk.download('punkt')
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+class UnifiedNeuromorphicDataSystem:
+    def __init__(self, config=None):
+        """
+        Unified system combining traditional data processing with neuromorphic computing.
+
+        Args:
+            config (dict): Configuration for the system
+        """
+        # Initialize neuromorphic components
+        self.neuromorphic_config = config.get('neuromorphic', {}) if config else {}
+        self.brain_os = NeuromorphicAIBrainOS(self.neuromorphic_config)
+
+        # Initialize traditional data processing components
+        self.data_ingestors = {
+            'database': None,
+            'api': APIIngestor(),
+            'web': WebScraper(),
+            'kafka': None,
+            'file': None
+        }
+        self.transformer = PandasTransformer()
+        self.storers = {
+            's3': None,
+            'gcs': None,
+            'database': None,
+            'mongo': None,
+            'cassandra': None
+        }
+        self.processors = {
+            'batch': SparkBatchProcessor(),
+            'stream': None
+        }
+        self.visualizers = {
+            'matplotlib': MatplotlibVisualizer(),
+            'seaborn': SeabornVisualizer(),
+            'neuromorphic': None  # Will use brain_os's visualization
+        }
+        self.preprocessor = DataPreprocessor()
+        self.model_selector = ModelSelector()
+        self.model_trainer = ModelTrainer()
+        self.model_evaluator = ModelEvaluator()
+        self.model_deployer = ModelDeployer()
+        self.model_retrainer = ModelRetrainer()
+        self.shape_processor = DataShapeProcessor()
+        self.expander = CylindricalExpander()
+        self.integrator = DataIntegrator()
+        self.info_processor = InformationProcessor()
+        self.decision_maker = DecisionMaker()
+
+        # Hybrid processing state
+        self.hybrid_models = {}  # For storing models that combine both approaches
+        self.data_converters = {
+            'to_spikes': self.brain_os.data_ingestor._convert_to_spikes,
+            'from_spikes': self._convert_from_spikes
+        }
+
+        # Set up default components
+        self._initialize_components(config)
+
+    def _initialize_components(self, config=None):
+        """Initialize the various components based on configuration."""
+        if config is None:
+            config = {}
+
+        # Initialize ingestors
+        db_config = config.get('database_ingestor', {})
+        if db_config:
+            self.data_ingestors['database'] = DatabaseIngestor(
+                db_config.get('type'),
+                db_config.get('connection_params', {})
+            )
+
+        kafka_config = config.get('kafka_ingestor', {})
+        if kafka_config.get('bootstrap_servers'):
+            self.data_ingestors['kafka'] = KafkaStreamIngestor(
+                kafka_config['bootstrap_servers']
+            )
+
+        file_config = config.get('file_ingestor', {})
+        if file_config.get('type'):
+            self.data_ingestors['file'] = FileStorageIngestor(
+                file_config['type'],
+                file_config.get('credentials', {})
+            )
+
+        # Initialize storers
+        s3_config = config.get('s3_storer', {})
+        if s3_config.get('credentials'):
+            self.storers['s3'] = S3Storer(s3_config['credentials'])
+
+        gcs_config = config.get('gcs_storer', {})
+        if gcs_config.get('credentials'):
+            self.storers['gcs'] = GCSStorer(gcs_config['credentials'])
+
+        db_storer_config = config.get('db_storer', {})
+        if db_storer_config.get('type'):
+            self.storers['database'] = DatabaseStorer(
+                db_storer_config['type'],
+                db_storer_config.get('connection_params', {})
+            )
+
+        mongo_config = config.get('mongo_storer', {})
+        if mongo_config.get('connection_string'):
+            self.storers['mongo'] = MongoDBStorer(
+                mongo_config['connection_string'],
+                mongo_config.get('db_name', 'default_db')
+            )
+
+        cassandra_config = config.get('cassandra_storer', {})
+        if cassandra_config.get('contact_points'):
+            self.storers['cassandra'] = CassandraStorer(
+                cassandra_config['contact_points'],
+                cassandra_config.get('keyspace', 'default_keyspace')
+            )
+
+        # Initialize stream processor if Kafka config exists
+        kafka_streams_config = config.get('kafka_streams', {})
+        if kafka_streams_config.get('bootstrap_servers'):
+            self.processors['stream'] = KafkaStreamsProcessor(
+                kafka_streams_config['bootstrap_servers'],
+                kafka_streams_config.get('app_id', 'stream_processor')
+            )
+
+    def _convert_from_spikes(self, spike_data, method='rate', params=None):
+        """
+        Convert spike data back to traditional data format.
+
+        Args:
+            spike_data (dict): Spike data {neuron_id: [spike_times]}
+            method (str): Conversion method ('rate', 'temporal')
+            params (dict): Additional parameters for conversion
+
+        Returns:
+            array-like: Converted data
+        """
+        if params is None:
+            params = {}
+
+        if method == 'rate':
+            # Convert spike rates back to values
+            time_window = params.get('time_window', 100)  # ms
+            max_rate = params.get('max_rate', 100)  # Hz
+
+            if not spike_data:
+                return np.array([])
+
+            neuron_ids = sorted(spike_data.keys())
+            values = []
+
+            for neuron_id in neuron_ids:
+                spike_times = spike_data.get(neuron_id, [])
+                spike_count = len(spike_times)
+                rate = (spike_count / (time_window / 1000)) if time_window > 0 else 0  # Convert to Hz
+
+                # Scale back to original range (assuming 0-1 normalization before conversion)
+                normalized_value = rate / max_rate
+                values.append(normalized_value)
+
+            return np.array(values)
+
+        elif method == 'temporal':
+            # Convert spike latencies back to values
+            max_latency = params.get('max_latency', 100)  # ms
+
+            if not spike_data:
+                return np.array([])
+
+            neuron_ids = sorted(spike_data.keys())
+            values = []
+
+            for neuron_id in neuron_ids:
+                spike_times = spike_data.get(neuron_id, [])
+                if spike_times:
+                    # Take the first spike time as representative
+                    latency = spike_times[0]
+                    # In temporal coding, lower latency typically represents higher value
+                    normalized_value = max(0, 1 - (latency / max_latency))
+                else:
+                    normalized_value = 0
+
+                values.append(normalized_value)
+
+            return np.array(values)
+
+        else:
+            raise ValueError(f"Unsupported conversion method: {method}")
+
+    def ingest_data(self, source, source_type='traditional', encoding_params=None):
+        """
+        Ingest data from various sources.
+
+        Args:
+            source: Data source
+            source_type (str): Type of source ('traditional', 'neuromorphic', 'kafka', etc.)
+            encoding_params: Parameters for data encoding (for neuromorphic ingestion)
+
+        Returns:
+            Data in appropriate format based on source type
+        """
+        if source_type == 'neuromorphic':
+            return self.brain_os.ingest_data(source, encoding_params)
+        elif source_type == 'traditional':
+            # For traditional sources, we'll use the appropriate ingestor
+            if isinstance(source, (pd.DataFrame, np.ndarray, list)):
+                # Already in memory, just return (or convert to spikes if needed)
+                if encoding_params:
+                    return self.brain_os.data_ingestor._convert_to_spikes(source, encoding_params)
+                return source
+            else:
+                raise ValueError("Unsupported traditional data source")
+        elif source_type == 'database':
+            if not self.data_ingestors['database']:
+                raise ValueError("Database ingestor not configured")
+            return self.data_ingestors['database'].ingest(source)
+        elif source_type == 'api':
+            if isinstance(source, str):  # source is URL
+                return self.data_ingestors['api'].ingest(source)
+            elif isinstance(source, dict):  # source contains url and params
+                return self.data_ingestors['api'].ingest(source['url'], source.get('params'))
+        elif source_type == 'web':
+            return self.data_ingestors['web'].ingest(source)
+        elif source_type == 'kafka':
+            if not self.data_ingestors['kafka']:
+                raise ValueError("Kafka ingestor not configured")
+            return self.data_ingestors['kafka'].ingest(source['topic'], source.get('data'))
+        elif source_type == 'file':
+            if not self.data_ingestors['file']:
+                raise ValueError("File ingestor not configured")
+            return self.data_ingestors['file'].ingest(source)
+        else:
+            raise ValueError(f"Unsupported source type: {source_type}")
+
+    def transform_data(self, data, transformations=None, convert_to='traditional'):
+        """
+        Transform data between formats or apply transformations.
+
+        Args:
+            data: Input data (can be traditional or spike format)
+            transformations: Transformations to apply
+            convert_to: Target format ('traditional' or 'neuromorphic')
+
+        Returns:
+            Transformed data in requested format
+        """
+        # First check if we need to convert the data format
+        data_format = 'neuromorphic' if isinstance(data, dict) and all(isinstance(v, list) for v in data.values()) else 'traditional'
+
+        if data_format == convert_to:
+            # No conversion needed
+            pass
+        elif data_format == 'traditional' and convert_to == 'neuromorphic':
+            # Convert traditional to spike data
+            if encoding_params is None:
+                encoding_params = {}
+            data = self.brain_os.data_ingestor._convert_to_spikes(data, encoding_params)
+        elif data_format == 'neuromorphic' and convert_to == 'traditional':
+            # Convert spike data to traditional format
+            data = self._convert_from_spikes(data)
+
+        # Apply transformations if specified
+        if transformations:
+            if data_format == 'traditional' or convert_to == 'traditional':
+                # Use traditional transformer
+                if isinstance(data, dict):
+                    # Convert to DataFrame if it's a dict (but not spike data)
+                    data = pd.DataFrame(data)
+                data = self.transformer.transform(data, transformations)
+            else:
+                # For neuromorphic data, we might want to apply different transformations
+                # For now, we'll just pass through
+                pass
+
+        return data
+
+    def process_data(self, data, processing_type='hybrid', model_config=None, training_config=None):
+        """
+        Process data using traditional, neuromorphic, or hybrid approaches.
+
+        Args:
+            data: Input data (can be traditional or spike format)
+            processing_type: Type of processing ('traditional', 'neuromorphic', 'hybrid')
+            model_config: Configuration for model training
+            training_config: Training configuration
+
+        Returns:
+            Processed results and metrics
+        """
+        if processing_type == 'neuromorphic':
+            # Use neuromorphic processing
+            if isinstance(data, dict) and all(isinstance(v, list) for v in data.values()):
+                # Already in spike format
+                spike_data = data
+            else:
+                # Convert to spike format
+                spike_data = self.brain_os.data_ingestor._convert_to_spikes(data)
+
+            # For neuromorphic processing, we'll need some targets if we're training
+            targets = None
+            if model_config and 'targets' in model_config:
+                targets_data = model_config['targets']
+                if not isinstance(targets_data, dict):
+                    targets = self.brain_os.data_ingestor._convert_to_spikes(targets_data)
+                else:
+                    targets = targets_data
+
+            # Process through the neuromorphic system
+            output, metrics = self.brain_os.process_data(
+                spike_data,
+                target_output=targets,
+                reward_signal=model_config.get('reward_signal') if model_config else None
+            )
+            return {'output': output, 'metrics': metrics}
+
+        elif processing_type == 'traditional':
+            # Use traditional machine learning pipeline
+            if isinstance(data, dict):
+                # Convert spike data back to traditional format
+                data = self._convert_from_spikes(data)
+
+            # Check if we have targets and split data if needed
+            if model_config and 'targets' in model_config:
+                targets = model_config['targets']
+                if isinstance(targets, dict):
+                    targets = self._convert_from_spikes(targets)
+
+                # Split data
+                X_train, X_test, y_train, y_test = train_test_split(
+                    data, targets,
+                    test_size=training_config.get('test_size', 0.2),
+                    random_state=training_config.get('random_state', 42)
+                )
+
+                # Preprocess data
+                X_train = self.preprocessor.normalize(X_train, method=training_config.get('normalization', 'standard'))
+                X_test = self.preprocessor.normalize(X_test, method=training_config.get('normalization', 'standard'))
+
+                # Select and train model
+                model_type = model_config.get('type', 'random_forest')
+                model_params = model_config.get('params', {})
+                problem_type = model_config.get('problem_type', 'classification')
+
+                if problem_type == 'classification':
+                    model = self.model_selector.select_classifier(model_type, **model_params)
+                elif problem_type == 'regression':
+                    model = self.model_selector.select_regressor(model_type, **model_params)
+                elif problem_type == 'clustering':
+                    model = self.model_selector.select_clusterer(model_type, **model_params)
+                else:
+                    raise ValueError(f"Unknown problem type: {problem_type}")
+
+                trained_model = self.model_trainer.train(model, X_train, y_train)
+
+                # Evaluate model
+                if problem_type == 'classification':
+                    metrics = self.model_evaluator.evaluate_classifier(trained_model, X_test, y_test)
+                elif problem_type == 'regression':
+                    metrics = self.model_evaluator.evaluate_regressor(trained_model, X_test, y_test)
+                else:
+                    metrics = {}
+
+                # Return predictions on test set
+                predictions = trained_model.predict(X_test)
+                return {
+                    'output': predictions,
+                    'model': trained_model,
+                    'metrics': metrics
+                }
+            else:
+                # No targets - just return the processed data
+                return {'output': data}
+
+        elif processing_type == 'hybrid':
+            # Hybrid processing pipeline
+            # First check if data is in spike format
+            is_spike_data = isinstance(data, dict) and all(isinstance(v, list) for v in data.values())
+
+            if not is_spike_data:
+                # Convert to spike data for neuromorphic processing
+                spike_data = self.brain_os.data_ingestor._convert_to_spikes(data)
+            else:
+                spike_data = data
+
+            # Process through neuromorphic system
+            neuromorphic_output, neuromorphic_metrics = self.brain_os.process_data(spike_data)
+
+            # Convert neuromorphic output back to traditional format
+            neuromorphic_features = self._convert_from_spikes(neuromorphic_output)
+
+            # Prepare data for traditional ML
+            if isinstance(data, dict):
+                # Original data was in spike format
+                traditional_data = self._convert_from_spikes(data)
+                if model_config and 'targets' in model_config:
+                    targets = self._convert_from_spikes(model_config['targets'])
+            else:
+                # Original data was in traditional format
+                traditional_data = data.copy() if isinstance(data, (np.ndarray, pd.DataFrame)) else data
+                if model_config and 'targets' in model_config:
+                    targets = model_config['targets']
+
+            # Combine original features with neuromorphic features
+            if isinstance(traditional_data, pd.DataFrame):
+                combined_data = traditional_data.copy()
+                # Add neuromorphic features as new columns
+                for i in range(len(neuromorphic_features)):
+                    combined_data[f'neuromorphic_feature_{i}'] = neuromorphic_features[i]
+            else:
+                # For numpy arrays
+                if isinstance(traditional_data, np.ndarray):
+                    combined_data = np.hstack([traditional_data, neuromorphic_features.reshape(-1, 1)])
+                else:
+                    # For lists or other formats
+                    combined_data = np.column_stack([traditional_data, neuromorphic_features])
+
+            # Process with traditional ML pipeline
+            if model_config and 'targets' in model_config:
+                X_train, X_test, y_train, y_test = train_test_split(
+                    combined_data, targets,
+                    test_size=training_config.get('test_size', 0.2),
+                    random_state=training_config.get('random_state', 42)
+                )
+
+                # Preprocess data
+                X_train = self.preprocessor.normalize(X_train, method=training_config.get('normalization', 'standard'))
+                X_test = self.preprocessor.normalize(X_test, method=training_config.get('normalization', 'standard'))
+
+                # Select and train model
+                model_type = model_config.get('type', 'random_forest')
+                model_params = model_config.get('params', {})
+                problem_type = model_config.get('problem_type', 'classification')
+
+                if problem_type == 'classification':
+                    model = self.model_selector.select_classifier(model_type, **model_params)
+                elif problem_type == 'regression':
+                    model = self.model_selector.select_regressor(model_type, **model_params)
+                else:
+                    raise ValueError(f"Unsupported problem type for hybrid processing: {problem_type}")
+
+                trained_model = self.model_trainer.train(model, X_train, y_train)
+
+                # Evaluate model
+                if problem_type == 'classification':
+                    metrics = self.model_evaluator.evaluate_classifier(trained_model, X_test, y_test)
+                else:
+                    metrics = self.model_evaluator.evaluate_regressor(trained_model, X_test, y_test)
+
+                # Return predictions on test set
+                predictions = trained_model.predict(X_test)
+                return {
+                    'output': predictions,
+                    'model': trained_model,
+                    'neuromorphic_metrics': neuromorphic_metrics,
+                    'traditional_metrics': metrics,
+                    'processing_type': 'hybrid',
+                    'neuromorphic_features': neuromorphic_features
+                }
+            else:
+                # No targets - just return the processed data
+                return {
+                    'output': combined_data,
+                    'processing_type': 'hybrid',
+                    'neuromorphic_features': neuromorphic_features
+                }
+
+        else:
+            raise ValueError(f"Unknown processing type: {processing_type}")
+
+    def visualize_data(self, data, visualization_type='auto', data_format='detect'):
+        """
+        Visualize data using appropriate visualization method.
+
+        Args:
+            data: Data to visualize
+            visualization_type: Type of visualization ('auto', 'raster', 'line', etc.)
+            data_format: Format of the data ('traditional', 'neuromorphic', 'detect')
+
+        Returns:
+            Visualization output (usually displays plot)
+        """
+        if data_format == 'detect':
+            if isinstance(data, dict) and all(isinstance(v, list) for v in data.values()):
+                data_format = 'neuromorphic'
+            else:
+                data_format = 'traditional'
+
+        if data_format == 'neuromorphic':
+            if visualization_type == 'auto' or visualization_type == 'raster':
+                self.brain_os.visualize_activity(data, 'raster')
+            elif visualization_type == 'rate':
+                self.brain_os.visualize_activity(data, 'rate')
+            else:
+                # Try traditional visualization of converted data
+                traditional_data = self._convert_from_spikes(data)
+                self.visualizers['matplotlib'].visualize(traditional_data, visualization_type)
+        else:
+            if visualization_type == 'auto':
+                visualization_type = 'line' if isinstance(data, (list, np.ndarray, pd.Series)) else 'heatmap'
+            self.visualizers['matplotlib'].visualize(data, visualization_type)
+
+    def store_data(self, data, destination_type='memory', destination_config=None, format_hint=None):
+        """
+        Store data in various storage systems.
+
+        Args:
+            data: Data to store
+            destination_type: Type of storage ('memory', 's3', 'gcs', 'database', etc.)
+            destination_config: Configuration for storage destination
+            format_hint: Hint about data format ('traditional', 'neuromorphic')
+
+        Returns:
+            Storage confirmation or ID
+        """
+        if destination_type == 'memory':
+            # Store in neuromorphic memory
+            if format_hint == 'neuromorphic' or (format_hint is None and isinstance(data, dict)):
+                return self.brain_os.memory_store.store(data)
+            else:
+                # Convert to spikes and store
+                spike_data = self.brain_os.data_ingestor._convert_to_spikes(data)
+                return self.brain_os.memory_store.store(spike_data)
+        elif destination_type == 's3':
+            if not self.storers['s3']:
+                raise ValueError("S3 storer not configured")
+            if format_hint == 'neuromorphic':
+                # Convert spike data to storable format
+                storable_data = {
+                    'neuron_ids': list(data.keys()),
+                    'spike_times': [list(times) for times in data.values()]
+                }
+                data = storable_data
+            return self.storers['s3'].store(data, destination_config['bucket'], destination_config['key'])
+        elif destination_type == 'gcs':
+            if not self.storers['gcs']:
+                raise ValueError("GCS storer not configured")
+            if format_hint == 'neuromorphic':
+                # Convert spike data to storable format
+                storable_data = {
+                    'neuron_ids': list(data.keys()),
+                    'spike_times': [list(times) for times in data.values()]
+                }
+                data = storable_data
+            return self.storers['gcs'].store(data, destination_config['bucket'], destination_config['blob_name'])
+        elif destination_type == 'database':
+            if not self.storers['database']:
+                raise ValueError("Database storer not configured")
+            if format_hint == 'neuromorphic':
+                # Convert spike data to traditional format for database storage
+                data = self._convert_from_spikes(data)
+            return self.storers['database'].store(data, destination_config['table_name'])
+        elif destination_type == 'mongo':
+            if not self.storers['mongo']:
+                raise ValueError("MongoDB storer not configured")
+            if format_hint == 'neuromorphic':
+                # Convert spike data to storable format
+                storable_data = {
+                    'format': 'neuromorphic',
+                    'neuron_ids': list(data.keys()),
+                    'spike_times': [list(times) for times in data.values()]
+                }
+                data = storable_data
+            return self.storers['mongo'].store(data, destination_config.get('collection_name', 'data'))
+        else:
+            raise ValueError(f"Unsupported destination type: {destination_type}")
+
+    def retrieve_data(self, source_type='memory', source_config=None, query=None):
+        """
+        Retrieve data from various storage systems.
+
+        Args:
+            source_type: Type of storage source ('memory', 's3', 'gcs', etc.)
+            source_config: Configuration for storage source
+            query: Query or identifier for data retrieval
+
+        Returns:
+            Retrieved data
+        """
+        if source_type == 'memory':
+            if isinstance(query, dict):
+                # Assume it's a partial pattern for associative recall
+                return self.brain_os.memory_store.retrieve(partial_pattern=query)
+            else:
+                # Assume it's a pattern_id
+                return self.brain_os.memory_store.retrieve(pattern_id=query)
+        elif source_type == 's3':
+            if not self.storers['s3']:
+                raise ValueError("S3 storer not configured")
+            data = self.storers['s3'].client.get_object(
+                Bucket=source_config['bucket'],
+                Key=source_config['key']
+            )['Body'].read()
+            # Try to parse the data
+            try:
+                data = json.loads(data)
+                if data.get('format') == 'neuromorphic':
+                    # Reconstruct spike data
+                    spike_data = {
+                        n_id: times for n_id, times in zip(data['neuron_ids'], data['spike_times'])
+                    }
+                    return spike_data
+                return data
+            except json.JSONDecodeError:
+                # Maybe it's CSV or other format - return raw bytes
+                return data
+        elif source_type == 'gcs':
+            if not self.storers['gcs']:
+                raise ValueError("GCS storer not configured")
+            blob = self.storers['gcs'].client.get_bucket(source_config['bucket']).blob(source_config['blob_name'])
+            data = blob.download_as_string()
+            # Try to parse the data
+            try:
+                data = json.loads(data)
+                if data.get('format') == 'neuromorphic':
+                    # Reconstruct spike data
+                    spike_data = {
+                        n_id: times for n_id, times in zip(data['neuron_ids'], data['spike_times'])
+                    }
+                    return spike_data
+                return data
+            except json.JSONDecodeError:
+                # Maybe it's CSV or other format - return raw bytes
+                return data
+        elif source_type == 'database':
+            if not self.storers['database']:
+                raise ValueError("Database storer not configured")
+            # For database, we need to implement query execution
+            # This is simplified - in reality would need proper SQL generation
+            if isinstance(query, str):
+                # Assume query is a SQL string
+                conn_params = self.storers['database'].connection_params.copy()
+                if self.storers['database'].db_type == 'postgresql':
+                    conn = psycopg2.connect(**conn_params)
+                elif self.storers['database'].db_type == 'mysql':
+                    conn = pymysql.connect(**conn_params)
+                else:
+                    raise ValueError("Unsupported database type")
+
+                result = pd.read_sql(query, conn)
+                conn.close()
+                return result
+            else:
+                raise ValueError("Query must be a string for database retrieval")
+        elif source_type == 'mongo':
+            if not self.storers['mongo']:
+                raise ValueError("MongoDB storer not configured")
+            collection = self.storers['mongo'].db[source_config.get('collection_name', 'data')]
+            if isinstance(query, dict):
+                # MongoDB query
+                results = list(collection.find(query))
+                if results and results[0].get('format') == 'neuromorphic':
+                    # Reconstruct spike data
+                    return [{
+                        n_id: times for n_id, times in zip(r['neuron_ids'], r['spike_times'])
+                    } for r in results]
+                return results
+            else:
+                # Get all documents or by ID
+                if query is None:
+                    results = list(collection.find())
+                else:
+                    results = collection.find_one({"_id": query})
+                if results and isinstance(results, list) and results[0].get('format') == 'neuromorphic':
+                    # Reconstruct spike data
+                    return [{
+                        n_id: times for n_id, times in zip(r['neuron_ids'], r['spike_times'])
+                    } for r in results]
+                elif results and results.get('format') == 'neuromorphic':
+                    # Single document case
+                    return {
+                        n_id: times for n_id, times in zip(results['neuron_ids'], results['spike_times'])
+                    }
+                return results
+        else:
+            raise ValueError(f"Unsupported source type: {source_type}")
+
+    def hybrid_model_training(self, data, targets=None, config=None):
+        """
+        Train a hybrid model combining neuromorphic and traditional approaches.
+
+        Args:
+            data: Input data (traditional or spike format)
+            targets: Target values for supervised learning
+            config: Configuration for hybrid training
+
+        Returns:
+            Trained hybrid model and performance metrics
+        """
+        if config is None:
+            config = {
+                'neuromorphic_config': {
+                    'encoding': 'rate',
+                    'network_config': {
+                        'n_input': 100,
+                        'n_hidden': 200,
+                        'n_output': 50,
+                        'simulation_time': 100
+                    },
+                    'learning_rule': 'stdp'
+                },
+                'traditional_config': {
+                    'model_type': 'random_forest',
+                    'problem_type': 'classification'
+                },
+                'training_config': {
+                    'test_size': 0.2,
+                    'random_state': 42
+                }
+            }
+
+        # Step 1: Neuromorphic Feature Extraction
+        # Convert data to spikes if needed
+        if isinstance(data, dict) and all(isinstance(v, list) for v in data.values()):
+            spike_data = data
+        else:
+            # Convert traditional data to spikes
+            spike_data = self.brain_os.data_ingestor._convert_to_spikes(
+                data,
+                {'time_window': 100, 'max_rate': 100}
+            )
+
+        # Configure and train neuromorphic processor
+        neuromorphic_config = config.get('neuromorphic_config', {})
+        self.brain_os.snn_processor.network_config.update(neuromorphic_config.get('network_config', {}))
+
+        # Process data through neuromorphic system to extract features
+        neuromorphic_output, _ = self.brain_os.process_data(spike_data)
+
+        # Convert neuromorphic output to traditional features
+        neuromorphic_features = self._convert_from_spikes(neuromorphic_output)
+
+        # Step 2: Combine with Traditional Features
+        # If original data wasn't in spike format, we'll use it as traditional features
+        if not isinstance(data, dict):
+            if isinstance(data, (np.ndarray, pd.DataFrame)):
+                traditional_features = data.copy()
+            else:
+                traditional_features = np.array(data)
+        else:
+            # If input was already in spike format, we'll just use the neuromorphic features
+            traditional_features = None
+
+        # Combine features
+        if traditional_features is not None:
+            if isinstance(traditional_features, pd.DataFrame):
+                combined_features = traditional_features.copy()
+                # Add neuromorphic features as new columns
+                for i in range(len(neuromorphic_features)):
+                    combined_features[f'neuro_feature_{i}'] = neuromorphic_features[i]
+            else:
+                # For numpy arrays or lists
+                if isinstance(traditional_features, np.ndarray):
+                    # Stack features horizontally
+                    if traditional_features.ndim == 1:
+                        traditional_features = traditional_features.reshape(-1, 1)
+                    if neuromorphic_features.ndim == 1:
+                        neuromorphic_features = neuromorphic_features.reshape(-1, 1)
+
+                    # Ensure both have same number of samples
+                    min_samples = min(traditional_features.shape[0], neuromorphic_features.shape[0])
+                    combined_features = np.hstack((
+                        traditional_features[:min_samples],
+                        neuromorphic_features[:min_samples].reshape(min_samples, -1)
+                    ))
+                else:
+                    # For lists or other formats
+                    combined_features = np.column_stack((
+                        traditional_features,
+                        neuromorphic_features
+                    ))
+        else:
+            combined_features = neuromorphic_features
+
+        # Step 3: Train Traditional Model on Combined Features
+        problem_type = config.get('traditional_config', {}).get('problem_type', 'classification')
+
+        if targets is not None:
+            # Split data
+            X_train, X_test, y_train, y_test = train_test_split(
+                combined_features, targets,
+                test_size=config.get('training_config', {}).get('test_size', 0.2),
+                random_state=config.get('training_config', {}).get('random_state', 42)
+            )
+
+            # Preprocess data
+            X_train = self.preprocessor.normalize(
+                X_train,
+                method=config.get('training_config', {}).get('normalization', 'standard')
+            )
+            X_test = self.preprocessor.normalize(
+                X_test,
+                method=config.get('training_config', {}).get('normalization', 'standard')
+            )
+
+            # Select and train model
+            model_type = config.get('traditional_config', {}).get('model_type', 'random_forest')
+            model_params = config.get('traditional_config', {}).get('params', {})
+
+            if problem_type == 'classification':
+                model = self.model_selector.select_classifier(model_type, **model_params)
+            elif problem_type == 'regression':
+                model = self.model_selector.select_regressor(model_type, **model_params)
+            else:
+                raise ValueError(f"Unsupported problem type: {problem_type}")
+
+            trained_model = self.model_trainer.train(model, X_train, y_train)
+
+            # Evaluate model
+            if problem_type == 'classification':
+                metrics = self.model_evaluator.evaluate_classifier(trained_model, X_test, y_test)
+            else:
+                metrics = self.model_evaluator.evaluate_regressor(trained_model, X_test, y_test)
+
+            # Store the hybrid model components
+            hybrid_model = {
+                'neuromorphic_component': {
+                    'processor': self.brain_os.snn_processor,
+                    'memory': self.brain_os.memory_store,
+                    'encoding_params': {'time_window': 100, 'max_rate': 100}
+                },
+                'traditional_component': trained_model,
+                'feature_combiner': {
+                    'traditional_feature_count': traditional_features.shape[1] if traditional_features is not None else 0,
+                    'neuromorphic_feature_count': neuromorphic_features.shape[0] if isinstance(neuromorphic_features, np.ndarray) else len(neuromorphic_features)
+                }
+            }
+
+            return {
+                'model': hybrid_model,
+                'metrics': metrics,
+                'feature_importance': getattr(trained_model, 'feature_importances', None)
+            }
+        else:
+            # No targets - just return the feature extraction pipeline
+            return {
+                'feature_extraction_pipeline': {
+                    'neuromorphic_component': {
+                        'processor': self.brain_os.snn_processor,
+                        'memory': self.brain_os.memory_store,
+                        'encoding_params': {'time_window': 100, 'max_rate': 100}
+                    },
+                    'feature_combiner': {
+                        'traditional_feature_count': traditional_features.shape[1] if traditional_features is not None else 0,
+                        'neuromorphic_feature_count': neuromorphic_features.shape[0] if isinstance(neuromorphic_features, np.ndarray) else len(neuromorphic_features)
+                    }
+                }
+            }
+
+    def predict_with_hybrid_model(self, model, data):
+        """
+        Make predictions using a hybrid model.
+
+        Args:
+            model: Hybrid model from hybrid_model_training
+            data: Input data for prediction
+
+        Returns:
+            Predictions
+        """
+        # Step 1: Extract neuromorphic features
+        if isinstance(data, dict) and all(isinstance(v, list) for v in data.values()):
+            spike_data = data
+        else:
+            # Convert traditional data to spikes using saved encoding params
+            encoding_params = model['neuromorphic_component']['encoding_params']
+            spike_data = self.brain_os.data_ingestor._convert_to_spikes(data, encoding_params)
+
+        # Get neuromorphic processor from model
+        neuromorphic_processor = model['neuromorphic_component']['processor']
+
+        # Process through neuromorphic system
+        neuromorphic_output = neuromorphic_processor.process(spike_data)
+
+        # Convert neuromorphic output to features
+        neuromorphic_features = self._convert_from_spikes(neuromorphic_output)
+
+        # Step 2: Combine with traditional features if they exist
+        feature_combiner = model['feature_combiner']
+        traditional_feature_count = feature_combiner['traditional_feature_count']
+
+        if traditional_feature_count > 0:
+            # We had traditional features in training
+            if not isinstance(data, dict):
+                # Original data was traditional format, so we still have it
+                traditional_features = data.copy()
+            else:
+                # Original data was spike format, we can't get traditional features
+                # Create dummy features of zeros
+                n_samples = len(neuromorphic_features) if isinstance(neuromorphic_features, (list, np.ndarray)) else 1
+                traditional_features = np.zeros((n_samples, traditional_feature_count))
+
+            # Combine features
+            if isinstance(traditional_features, pd.DataFrame):
+                combined_features = traditional_features.copy()
+                for i in range(len(neuromorphic_features)):
+                    combined_features[f'neuro_feature_{i}'] = neuromorphic_features[i]
+            else:
+                if isinstance(traditional_features, np.ndarray) and traditional_features.ndim == 1:
+                    traditional_features = traditional_features.reshape(1, -1)
+                if isinstance(neuromorphic_features, np.ndarray) and neuromorphic_features.ndim == 1:
+                    neuromorphic_features = neuromorphic_features.reshape(1, -1)
+
+                combined_features = np.hstack((traditional_features, neuromorphic_features))
+        else:
+            # No traditional features in training
+            if isinstance(neuromorphic_features, np.ndarray) and neuromorphic_features.ndim == 1:
+                combined_features = neuromorphic_features.reshape(1, -1)
+            else:
+                combined_features = neuromorphic_features
+
+        # Step 3: Make prediction with traditional model
+        traditional_model = model['traditional_component']
+
+        # Preprocess combined features (using same method as during training)
+        combined_features = self.preprocessor.normalize(combined_features)
+
+        # Make prediction
+        return traditional_model.predict(combined_features)
+
+# Now let's define all the supporting classes that were referenced in the UnifiedNeuromorphicDataSystem.
+
+# Data Ingestion Classes (from original code)
+class DataIngestor(ABC):
+    @abstractmethod
+    def ingest(self, source):
+        pass
+
+class DatabaseIngestor(DataIngestor):
+    def __init__(self, db_type, connection_params):
+        self.db_type = db_type
+        self.connection_params = connection_params
+
+    def ingest(self, query):
+        if self.db_type == 'postgresql':
+            conn = psycopg2.connect(**self.connection_params)
+        elif self.db_type == 'mysql':
+            conn = pymysql.connect(**self.connection_params)
+        else:
+            raise ValueError("Unsupported database type")
+        return pd.read_sql(query, conn)
+
+class APIIngestor(DataIngestor):
+    def ingest(self, url, params=None):
+        response = requests.get(url, params=params)
+        return response.json()
+
+class WebScraper(DataIngestor):
+    def ingest(self, url):
+        soup = BeautifulSoup(requests.get(url).content, 'html.parser')
+        return soup.get_text()
+
+class KafkaStreamIngestor(DataIngestor):
+    def __init__(self, bootstrap_servers):
+        self.producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
+
+    def ingest(self, topic, data):
+        self.producer.send(topic, str(data).encode('utf-8'))
+
+class FileStorageIngestor(DataIngestor):
+    def __init__(self, storage_type, credentials):
+        self.storage_type = storage_type
+        self.credentials = credentials
+
+    def ingest(self, file_path):
+        if self.storage_type == 's3':
+            s3 = boto3.client('s3', **self.credentials)
+            obj = s3.get_object(Bucket=file_path.split('/')[0], Key='/'.join(file_path.split('/')[1:]))
+            return obj['Body'].read()
+        elif self.storage_type == 'gcs':
+            storage_client = storage.Client.from_service_account_info(self.credentials)
+            bucket_name = file_path.split('/')[0]
+            blob_name = '/'.join(file_path.split('/')[1:])
+            bucket = storage_client.get_bucket(bucket_name)
+            blob = bucket.blob(blob_name)
+            return blob.download_as_string()
+        else:
+            raise ValueError("Unsupported storage type")
+
+# Data Transformation Classes
+class DataTransformer(ABC):
+    @abstractmethod
+    def transform(self, data):
+        pass
+
+class SparkTransformer(DataTransformer):
+    def __init__(self):
+        self.spark = SparkSession.builder.appName("DataTransformer").getOrCreate()
+
+    def transform(self, data, transformations):
+        df = self.spark.createDataFrame(data)
+        for col, transform in transformations.items():
+            df = df.withColumn(col, transform(df[col]))
+        return df.toPandas()
+
+class PandasTransformer(DataTransformer):
+    def transform(self, data, transformations):
+        if not isinstance(data, pd.DataFrame):
+            df = pd.DataFrame(data)
+        else:
+            df = data.copy()
+
+        if transformations:
+            for col, transform in transformations.items():
+                if col in df.columns:
+                    df[col] = transform(df[col])
+        return df
+
+# Data Storage Classes
+class DataStorer(ABC):
+    @abstractmethod
+    def store(self, data, destination):
+        pass
+
+class S3Storer(DataStorer):
+    def __init__(self, credentials):
+        self.client = boto3.client('s3', **credentials)
+
+    def store(self, data, bucket, key):
+        if isinstance(data, pd.DataFrame):
+            csv_buffer = io.StringIO()
+            data.to_csv(csv_buffer, index=False)
+            data = csv_buffer.getvalue()
+        elif isinstance(data, (dict, list)):
+            data = json.dumps(data)
+        self.client.put_object(Bucket=bucket, Key=key, Body=data)
+
+class GCSStorer(DataStorer):
+    def __init__(self, credentials):
+        self.client = storage.Client.from_service_account_info(credentials)
+
+    def store(self, data, bucket, blob_name):
+        if isinstance(data, pd.DataFrame):
+            csv_buffer = io.StringIO()
+            data.to_csv(csv_buffer, index=False)
+            data = csv_buffer.getvalue()
+        elif isinstance(data, (dict, list)):
+            data = json.dumps(data)
+        bucket = self.client.get_bucket(bucket)
+        blob = bucket.blob(blob_name)
+        blob.upload_from_string(data)
+
+class DatabaseStorer(DataStorer):
+    def __init__(self, db_type, connection_params):
+        self.db_type = db_type
+        self.connection_params = connection_params
+
+    def store(self, data, table_name):
+        df = pd.DataFrame(data)
+        if self.db_type == 'postgresql':
+            conn = psycopg2.connect(**self.connection_params)
+        elif self.db_type == 'mysql':
+            conn = pymysql.connect(**self.connection_params)
+        else:
+            raise ValueError("Unsupported database type")
+        df.to_sql(table_name, conn, if_exists='replace', index=False)
+        conn.close()
+
+class MongoDBStorer(DataStorer):
+    def __init__(self, connection_string, db_name):
+        self.client = MongoClient(connection_string)
+        self.db = self.client[db_name]
+
+    def store(self, data, collection_name):
+        collection = self.db[collection_name]
+        if isinstance(data, list):
+            collection.insert_many(data)
+        else:
+            collection.insert_one(data)
+
+class CassandraStorer(DataStorer):
+    def __init__(self, contact_points, keyspace):
+        self.cluster = Cluster(contact_points)
+        self.session = self.cluster.connect(keyspace)
+
+    def store(self, data, table_name):
+        for row in data:
+            columns = ', '.join(row.keys())
+            placeholders = ', '.join(['%s'] * len(row))
+            query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+            self.session.execute(query, list(row.values()))
+
+# Data Processing Classes
+class BatchProcessor(ABC):
+    @abstractmethod
+    def process(self, data):
+        pass
+
+class SparkBatchProcessor(BatchProcessor):
+    def __init__(self):
+        self.spark = SparkSession.builder.appName("BatchProcessor").getOrCreate()
+
+    def process(self, data, processing_func):
+        df = self.spark.createDataFrame(data)
+        processed_df = processing_func(df)
+        return processed_df.toPandas()
+
+class StreamProcessor(ABC):
+    @abstractmethod
+    def process(self, data_stream):
+        pass
+
+class KafkaStreamsProcessor(StreamProcessor):
+    def __init__(self, bootstrap_servers, app_id):
+        self.bootstrap_servers = bootstrap_servers
+        self.app_id = app_id
+        # Actual Kafka Streams initialization would go here
+        # For this example, we'll just use a placeholder
+
+    def process(self, input_topic, output_topic, processing_func):
+        # In a real implementation, this would set up Kafka Streams processing
+        # For this example, we'll just simulate it
+        print(f"Processing stream from {input_topic} to {output_topic}")
+        return "Stream processing simulated"
+
+# Data Visualization Classes
+class DataVisualizer(ABC):
+    @abstractmethod
+    def visualize(self, data, visualization_type):
+        pass
+
+class MatplotlibVisualizer(DataVisualizer):
+    def visualize(self, data, visualization_type):
+        plt.figure(figsize=(10, 6))
+        if visualization_type == 'line':
+            if isinstance(data, pd.DataFrame):
+                plt.plot(data)
+            else:
+                plt.plot(data)
+        elif visualization_type == 'bar':
+            if isinstance(data, dict):
+                plt.bar(data.keys(), data.values())
+            elif isinstance(data, (pd.DataFrame, pd.Series)):
+                if isinstance(data, pd.DataFrame):
+                    data = data.iloc[:, 0] if len(data.columns) > 1 else data.iloc[:, 0]
+                plt.bar(data.index if hasattr(data, 'index') else range(len(data)), data.values)
+            else:
+                plt.bar(range(len(data)), data)
+        elif visualization_type == 'histogram':
+            plt.hist(data)
+        elif visualization_type == 'scatter':
+            if isinstance(data, (pd.DataFrame, np.ndarray)) and data.shape[1] >= 2:
+                plt.scatter(data[:, 0], data[:, 1])
+            else:
+                raise ValueError("Data must have at least 2 columns for scatter plot")
+        else:
+            raise ValueError(f"Unsupported visualization type: {visualization_type}")
+        plt.show()
+
+class SeabornVisualizer(DataVisualizer):
+    def visualize(self, data, visualization_type):
+        if visualization_type == 'heatmap':
+            if isinstance(data, pd.DataFrame):
+                sns.heatmap(data.corr(), annot=True)
+            else:
+                sns.heatmap(np.corrcoef(data), annot=True)
+        elif visualization_type == 'pairplot':
+            if isinstance(data, pd.DataFrame):
+                sns.pairplot(data)
+            else:
+                raise ValueError("Data must be a DataFrame for pairplot")
+        elif visualization_type == 'distplot':
+            sns.displot(data)
+        else:
+            raise ValueError(f"Unsupported visualization type: {visualization_type}")
+        plt.show()
+
+# ML/AI Processing Classes (from original code)
+class DataPreprocessor:
+    def normalize(self, data, method='standard'):
+        if isinstance(data, pd.DataFrame):
+            data = data.values
+        if method == 'standard':
+            scaler = StandardScaler()
+        elif method == 'minmax':
+            scaler = MinMaxScaler()
+        else:
+            raise ValueError("Unsupported normalization method")
+        return scaler.fit_transform(data)
+
+    def encode(self, data, method='onehot'):
+        if isinstance(data, pd.DataFrame):
+            data = data.values
+        if method == 'onehot':
+            encoder = OneHotEncoder(sparse=False)
+        elif method == 'label':
+            encoder = LabelEncoder()
+        else:
+            raise ValueError("Unsupported encoding method")
+        if len(data.shape) == 1 or data.shape[1] == 1:
+            return encoder.fit_transform(data.reshape(-1, 1)).reshape(-1, 1)
+        else:
+            return encoder.fit_transform(data)
+
+    def feature_engineering(self, data, operations):
+        df = pd.DataFrame(data)
+        for op in operations:
+            if op['type'] == 'add':
+                df[op['new_column']] = df[op['column1']] + df[op['column2']]
+            elif op['type'] == 'multiply':
+                df[op['new_column']] = df[op['column1']] * df[op['column2']]
+            elif op['type'] == 'polynomial':
+                df[op['new_column']] = df[op['column']] ** op['degree']
+            elif op['type'] == 'binning':
+                df[op['new_column']] = pd.cut(df[op['column']], bins=op['bins'])
+        return df.values if isinstance(data, np.ndarray) else df
+
+class ModelSelector:
+    def select_classifier(self, model_type, **kwargs):
+        models = {
+            'logistic_regression': LogisticRegression(**kwargs),
+            'decision_tree': DecisionTreeClassifier(**kwargs),
+            'random_forest': RandomForestClassifier(**kwargs),
+            'svm': SVC(**kwargs, probability=True),
+            'neural_network': MLPClassifier(**kwargs),
+            'xgboost': xgb.XGBClassifier(**kwargs),
+            'lightgbm': lgb.LGBMClassifier(**kwargs),
+        }
+        return models.get(model_type.lower())
+
+    def select_regressor(self, model_type, **kwargs):
+        models = {
+            'linear_regression': LinearRegression(**kwargs),
+            'ridge': Ridge(**kwargs),
+            'lasso': Lasso(**kwargs),
+            'decision_tree': DecisionTreeRegressor(**kwargs),
+            'random_forest': RandomForestRegressor(**kwargs),
+            'svr': SVR(**kwargs),
+            'neural_network': MLPRegressor(**kwargs),
+            'xgboost': xgb.XGBRegressor(**kwargs),
+            'lightgbm': lgb.LGBMRegressor(**kwargs),
+        }
+        return models.get(model_type.lower())
+
+    def select_clusterer(self, model_type, **kwargs):
+        models = {
+            'kmeans': KMeans(**kwargs),
+            'dbscan': DBSCAN(**kwargs),
+            'hierarchical': AgglomerativeClustering(**kwargs),
+        }
+        return models.get(model_type.lower())
+
+    def select_time_series(self, model_type, **kwargs):
+        if model_type.lower() == 'arima':
+            return ARIMA(**kwargs)
+        elif model_type.lower() == 'lstm':
+            model = Sequential()
+            model.add(LSTM(units=kwargs.get('units', 50),
+                          return_sequences=True,
+                          input_shape=kwargs.get('input_shape')))
+            model.add(LSTM(units=kwargs.get('units', 50)))
+            model.add(Dense(units=kwargs.get('output_units', 1)))
+            model.compile(optimizer=kwargs.get('optimizer', 'adam'),
+                         loss=kwargs.get('loss', 'mse'))
+            return model
+        elif model_type.lower() == 'gru':
+            model = Sequential()
+            model.add(GRU(units=kwargs.get('units', 50),
+                         return_sequences=True,
+                         input_shape=kwargs.get('input_shape')))
+            model.add(GRU(units=kwargs.get('units', 50)))
+            model.add(Dense(units=kwargs.get('output_units', 1)))
+            model.compile(optimizer=kwargs.get('optimizer', 'adam'),
+                         loss=kwargs.get('loss', 'mse'))
+            return model
+
+class ModelTrainer:
+    def train(self, model, X_train, y_train, cv=None, params=None):
+        if params and cv:
+            grid_search = GridSearchCV(model, params, cv=cv)
+            grid_search.fit(X_train, y_train)
+            return grid_search.best_estimator_
+        else:
+            model.fit(X_train, y_train)
+            return model
+
+    def train_time_series(self, model, data, epochs=10, batch_size=32, validation_data=None):
+        if hasattr(model, 'fit'):  # For scikit-learn models like ARIMA
+            return model.fit(data)
+        else:  # For Keras models like LSTM, GRU
+            history = model.fit(
+                data[0], data[1],
+                epochs=epochs,
+                batch_size=batch_size,
+                validation_data=validation_data
+            )
+            return model, history
+
+class ModelEvaluator:
+    def evaluate_classifier(self, model, X_test, y_test):
+        y_pred = model.predict(X_test)
+        try:
+            y_proba = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else y_pred
+            roc_auc = roc_auc_score(y_test, y_proba)
+        except:
+            roc_auc = None
+        return {
+            'accuracy': accuracy_score(y_test, y_pred),
+            'precision': precision_score(y_test, y_pred, average='weighted', zero_division=0),
+            'recall': recall_score(y_test, y_pred, average='weighted', zero_division=0),
+            'f1': f1_score(y_test, y_pred, average='weighted', zero_division=0),
+            'roc_auc': roc_auc
+        }
+
+    def evaluate_regressor(self, model, X_test, y_test):
+        y_pred = model.predict(X_test)
+        return {
+            'mse': mean_squared_error(y_test, y_pred),
+            'rmse': mean_squared_error(y_test, y_pred, squared=False),
+            'mae': mean_absolute_error(y_test, y_pred),
+            'r2': r2_score(y_test, y_pred)
+        }
+
+    def evaluate_clusterer(self, model, X_test, y_test=None):
+        labels = model.fit_predict(X_test) if y_test is None else model.labels_
+        metrics = {
+            'silhouette': silhouette_score(X_test, labels) if len(set(labels)) > 1 else -1,
+            'davies_bouldin': davies_bouldin_score(X_test, labels) if len(set(labels)) > 1 else -1
+        }
+        if y_test is not None:
+            metrics['adjusted_rand'] = adjusted_rand_score(y_test, labels)
+            metrics['normalized_mutual_info'] = normalized_mutual_info_score(y_test, labels)
+        return metrics
+
+    def evaluate_time_series(self, model, X_test, y_test):
+        if hasattr(model, 'predict'):  # For scikit-learn models
+            y_pred = model.predict(X_test)
+            return {
+                'mse': mean_squared_error(y_test, y_pred),
+                'rmse': mean_squared_error(y_test, y_pred, squared=False),
+                'mae': mean_absolute_error(y_test, y_pred)
+            }
+        else:  # For Keras models
+            y_pred = model.predict(X_test)
+            mse = np.mean(np.square(y_test - y_pred))
+            rmse = np.sqrt(mse)
+            mae = np.mean(np.abs(y_test - y_pred))
+            return {
+                'mse': mse,
+                'rmse': rmse,
+                'mae': mae
+            }
+
+class ModelDeployer:
+    def deploy_tf_serving(self, model, model_name, version, export_path):
+        tf.saved_model.save(model, f"{export_path}/{model_name}/{version}")
+
+    def deploy_flask(self, model, app_name, port=5000):
+        app = Flask(app_name)
+
+        @app.route('/predict', methods=['POST'])
+        def predict():
+            data = request.get_json()
+            if isinstance(model, tf.keras.Model):
+                prediction = model.predict(np.array(data['inputs'])).tolist()
+            else:
+                prediction = model.predict(np.array(data['inputs'])).tolist()
+            return jsonify({'prediction': prediction})
+
+        app.run(port=port)
+
+    def monitor_model(self, model, X_test, y_test, metric, threshold, callback):
+        from sklearn.metrics import get_scorer
+        scorer = get_scorer(metric)
+        score = scorer(model, X_test, y_test)
+        if score < threshold:
+            callback(model, score)
+        return score
+
+class ModelRetrainer:
+    def retrain(self, model, new_data, y_new=None, partial_fit=False):
+        if hasattr(model, 'partial_fit') and partial_fit:
+            model.partial_fit(new_data, y_new)
+        else:
+            if y_new is not None:
+                model.fit(new_data, y_new)
+            else:
+                model.fit(new_data)
+        return model
+
+    def setup_airflow_retraining(self, dag_id, schedule_interval, retrain_func, data_func, model_path):
+        from airflow import DAG
+        from airflow.operators.python_operator import PythonOperator
+        from datetime import datetime, timedelta
+
+        default_args = {
+            'owner': 'airflow',
+            'depends_on_past': False,
+            'start_date': datetime(2023, 1, 1),
+            'email_on_failure': False,
+            'email_on_retry': False,
+            'retries': 1,
+            'retry_delay': timedelta(minutes=5),
+        }
+
+        dag = DAG(
+            dag_id,
+            default_args=default_args,
+            description='Model retraining DAG',
+            schedule_interval=schedule_interval,
+        )
+
+        def retrain_task(**kwargs):
+            model = pickle.load(open(model_path, 'rb'))
+            new_data = data_func()
+            updated_model = retrain_func(model, new_data)
+            pickle.dump(updated_model, open(model_path, 'wb'))
+
+        retrain_operator = PythonOperator(
+            task_id='retrain_model',
+            python_callable=retrain_task,
+            dag=dag,
+        )
+
+        return dag
+
+class DataShapeProcessor:
+    def process_structured(self, data, query=None):
+        if isinstance(data, pd.DataFrame):
+            if query:
+                if '=' in query:
+                    col, val = query.split('=')
+                    col = col.strip()
+                    val = val.strip().strip("'")
+                    return data[data[col] == val]
+                return data.query(query)
+            return data
+        elif query:
+            return pd.read_sql(query, con=data)
+        else:
+            return pd.DataFrame(data)
+
+    def process_semi_structured(self, data, format='json'):
+        if format == 'json':
+            return pd.json_normalize(data)
+        elif format == 'xml':
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(data) if isinstance(data, str) else data
+            def parse_element(element):
+                if len(element) == 0:
+                    return element.text
+                else:
+                    return {child.tag: parse_element(child) for child in element}
+            return pd.json_normalize(parse_element(root))
+        else:
+            raise ValueError("Unsupported semi-structured data format")
+
+    def process_unstructured(self, data, data_type):
+        if data_type == 'text':
+            tokens = word_tokenize(str(data))
+            stop_words = set(stopwords.words('english'))
+            tokens = [word.lower() for word in tokens if word.isalpha() and word.lower() not in stop_words]
+            lemmatizer = WordNetLemmatizer()
+            tokens = [lemmatizer.lemmatize(word) for word in tokens]
+            return tokens
+        elif data_type == 'image':
+            if isinstance(data, str):
+                img = cv2.imread(data)
+            else:
+                if isinstance(data, bytes):
+                    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+                else:
+                    img = data
+            if len(img.shape) == 3:
+                gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            else:
+                gray_img = img
+            return gray_img
+        else:
+            raise ValueError("Unsupported unstructured data type")
+
+class CylindricalExpander:
+    def voxel_grid(self, data, resolution=(10, 10, 10)):
+        if isinstance(data, (list, np.ndarray)):
+            if len(data.shape) == 1:
+                cube_size = int(np.round(len(data) ** (1/3)))
+                data = np.array(data[:cube_size**3]).reshape((cube_size, cube_size, cube_size))
+            elif len(data.shape) == 2:
+                size = data.shape[0]
+                data = np.dstack([data] * resolution[2])
+                data = data[:resolution[0], :resolution[1], :resolution[2]]
+            elif len(data.shape) == 3:
+                if data.shape != resolution:
+                    from scipy.ndimage import zoom
+                    zoom_factors = [res/d for res, d in zip(resolution, data.shape)]
+                    data = zoom(data, zoom_factors)
+        grid = pv.UniformGrid()
+        grid.dimensions = resolution
+        grid.origin = (0, 0, 0)
+        grid.spacing = (1, 1, 1)
+        grid.cell_data['values'] = data.flatten(order='F')
+        return grid
+
+    def point_cloud(self, data):
+        if isinstance(data, pd.DataFrame):
+            points = data[['x', 'y', 'z']].values if all(c in data.columns for c in ['x', 'y', 'z']) else data.values
+        else:
+            points = np.array(data)
+        if points.ndim == 1:
+            points = points.reshape(-1, 3)
+        elif points.ndim == 2 and points.shape[1] > 3:
+            points = points[:, :3]
+        cloud = pv.PolyData(points)
+        return cloud
+
+    def temporal_analysis(self, data, time_column, target_column, method='arima'):
+        if isinstance(data, pd.DataFrame):
+            ts_data = data.copy()
+        else:
+            ts_data = pd.DataFrame(data)
+
+        if isinstance(time_column, str):
+            ts_data['time'] = pd.to_datetime(ts_data[time_column])
+            ts_data = ts_data.set_index('time').sort_index()
+            ts = ts_data[target_column]
+        else:
+            ts = pd.Series(data=ts_data[target_column].values,
+                          index=pd.to_datetime(ts_data.index if isinstance(time_column, int) else time_column))
+
+        if method == 'arima':
+            model = ARIMA(ts, order=(1, 1, 1))
+            model_fit = model.fit()
+            return model_fit
+        elif method == 'lstm':
+            scaler = MinMaxScaler()
+            scaled_data = scaler.fit_transform(ts.values.reshape(-1, 1))
+
+            def create_sequences(data, seq_length=3):
+                X, y = [], []
+                for i in range(len(data) - seq_length):
+                    X.append(data[i:i+seq_length])
+                    y.append(data[i+seq_length])
+                return np.array(X), np.array(y)
+
+            seq_length = 3
+            X, y = create_sequences(scaled_data)
+            X = X.reshape(X.shape[0], X.shape[1], 1)
+
+            model = Sequential([
+                LSTM(50, activation='relu', input_shape=(seq_length, 1)),
+                Dense(1)
+            ])
+            model.compile(optimizer='adam', loss='mse')
+            model.fit(X, y, epochs=20, batch_size=1, verbose=0)
+            return model, scaler
+        else:
+            raise ValueError("Unsupported temporal analysis method")
+
+    def spatial_analysis(self, data, lat_column, lon_column, method='kde'):
+        if isinstance(data, pd.DataFrame):
+            gdf = data.copy()
+        else:
+            gdf = pd.DataFrame(data)
+
+        geometry = [Point(xy) for xy in zip(gdf[lon_column], gdf[lat_column])]
+        gdf = gpd.GeoDataFrame(gdf, geometry=geometry)
+
+        if method == 'kde':
+            points = np.array(list(zip(gdf.geometry.x, gdf.geometry.y)))
+            if len(points) < 2:
+                raise ValueError("Not enough points for KDE")
+            plt.figure(figsize=(10, 8))
+            plt.scatter(gdf.geometry.x, gdf.geometry.y, alpha=0.5)
+            plt.title('Spatial Distribution')
+            plt.xlabel('Longitude')
+            plt.ylabel('Latitude')
+            plt.show()
+            return points
+        else:
+            raise ValueError("Unsupported spatial analysis method")
+
+class DataIntegrator:
+    def data_fusion(self, data_sources, fusion_strategy='concat'):
+        dfs = [pd.DataFrame(source) if not isinstance(source, pd.DataFrame) else source
+               for source in data_sources]
+
+        if fusion_strategy == 'concat':
+            return pd.concat(dfs, axis=0, ignore_index=True)
+        elif fusion_strategy == 'join':
+            base_df = dfs[0]
+            for df in dfs[1:]:
+                common_cols = list(set(base_df.columns) & set(df.columns))
+                if not common_cols:
+                    raise ValueError("No common columns for join operation")
+                base_df = base_df.merge(df, how='left', on=common_cols[0])
+            return base_df
+        else:
+            raise ValueError("Unsupported fusion strategy")
+
+    def data_warehousing(self, data, warehouse_type='redshift', credentials=None, table_name=None):
+        if warehouse_type == 'redshift':
+            if not credentials or not table_name:
+                raise ValueError("Redshift credentials and table name are required")
+            if isinstance(data, list):
+                df = pd.DataFrame(data)
+            else:
+                df = data.copy() if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
+
+            conn = redshift_connector.connect(**credentials)
+            cursor = conn.cursor()
+
+            columns = ', '.join([f"{col} VARCHAR(255)" for col in df.columns])
+            cursor.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({columns})")
+
+            for _, row in df.iterrows():
+                values = ', '.join([f"'{str(val)}'" if val is not None else 'NULL'
+                                   for val in row.values])
+                cursor.execute(f"INSERT INTO {table_name} VALUES ({values})")
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return f"Data loaded into Redshift table {table_name}"
+        else:
+            raise ValueError("Unsupported warehouse type")
+
+class InformationProcessor:
+    def information_extraction(self, data, data_type, method='nlp'):
+        if data_type == 'text':
+            if method == 'nlp':
+                def get_entities(text):
+                    chunked = ne_chunk(pos_tag(word_tokenize(text)))
+                    continuous_chunk = []
+                    current_chunk = []
+                    for chunk in chunked:
+                        if hasattr(chunk, 'label'):
+                            current_chunk.append(' '.join(c[0] for c in chunk.leaves()))
+                        elif current_chunk:
+                            continuous_chunk.append(' '.join(current_chunk))
+                            current_chunk = []
+                    if current_chunk:
+                        continuous_chunk.append(' '.join(current_chunk))
+                    return continuous_chunk
+
+                if isinstance(data, str):
+                    return get_entities(data)
+                elif isinstance(data, list):
+                    return [get_entities(doc) for doc in data]
+            elif method == 'spacy':
+                nlp = spacy.load("en_core_web_sm")
+                def extract_entities(text):
+                    doc = nlp(text)
+                    return [(ent.text, ent.label_) for ent in doc.ents]
+
+                if isinstance(data, str):
+                    return extract_entities(data)
+                elif isinstance(data, list):
+                    return [extract_entities(doc) for doc in data]
+        elif data_type == 'image':
+            if method == 'ocr':
+                if isinstance(data, str):
+                    img = cv2.imread(data)
+                else:
+                    img = data
+
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                return pytesseract.image_to_string(gray)
+        return None
+
+    def information_retrieval(self, query, data_source, method='tfidf'):
+        if isinstance(data_source, pd.DataFrame):
+            documents = data_source.apply(lambda x: ' '.join(x.astype(str)), axis=1).tolist()
+        elif isinstance(data_source, list):
+            documents = [' '.join(doc) if isinstance(doc, (list, tuple)) else str(doc)
+                         for doc in data_source]
+        else:
+            raise ValueError("Unsupported data source type")
+
+        if method == 'tfidf':
+            vectorizer = TfidfVectorizer()
+            tfidf_matrix = vectorizer.fit_transform(documents)
+            query_vec = vectorizer.transform([query])
+            similarities = cosine_similarity(query_vec, tfidf_matrix).flatten()
+            ranked_indices = similarities.argsort()[::-1]
+            return ranked_indices, similarities[ranked_indices]
+        elif method == 'bm25':
+            tokenized_corpus = [doc.split() for doc in documents]
+            bm25 = BM25Okapi(tokenized_corpus)
+            tokenized_query = query.split()
+            doc_scores = bm25.get_scores(tokenized_query)
+            ranked_indices = np.argsort(doc_scores)[::-1]
+            return ranked_indices, np.array(doc_scores)[ranked_indices]
+
+    def information_visualization(self, data, vis_type='heatmap', data_type='structured'):
+        if data_type == 'structured':
+            if vis_type == 'heatmap':
+                plt.figure(figsize=(10, 8))
+                if isinstance(data, pd.DataFrame):
+                    sns.heatmap(data.corr(), annot=True, cmap='coolwarm')
+                else:
+                    sns.heatmap(np.corrcoef(data), annot=True, cmap='coolwarm')
+                plt.title('Correlation Heatmap')
+                plt.show()
+            elif vis_type == 'pairplot':
+                if isinstance(data, pd.DataFrame):
+                    sns.pairplot(data)
+                plt.show()
+        elif data_type == 'text':
+            if vis_type == 'wordcloud':
+                if isinstance(data, (list, pd.Series)):
+                    text = ' '.join(str(d) for d in data)
+                else:
+                    text = str(data)
+                wordcloud = WordCloud(width=800, height=400).generate(text)
+                plt.figure(figsize=(10, 5))
+                plt.imshow(wordcloud, interpolation='bilinear')
+                plt.axis('off')
+                plt.show()
+
+class DecisionMaker:
+    def predictive_analytics(self, model, data, method='forecast'):
+        if method == 'forecast':
+            if hasattr(model, 'predict'):
+                return model.predict(data)
+            elif hasattr(model, 'forecast'):
+                return model.forecast(steps=len(data))
+            else:
+                raise ValueError("Model does not support forecasting")
+        elif method == 'classify':
+            if hasattr(model, 'predict_proba'):
+                return model.predict_proba(data)
+            else:
+                return model.predict(data)
+        else:
+            raise ValueError("Unsupported predictive analytics method")
+
+    def prescriptive_analytics(self, model, data, objective, constraints=None):
+        if constraints is None:
+            constraints = {}
+
+        if hasattr(model, 'predict'):
+            prediction = model.predict(data)
+            return {'recommendation': prediction, 'objective_value': objective(prediction)}
+        else:
+            from scipy.optimize import minimize
+            def objective_func(x):
+                outcome = model.predict(x.reshape(1, -1))[0]
+                return objective(outcome)
+
+            initial_guess = np.zeros(data.shape[1])
+            bounds = [(0, 1)] * data.shape[1]
+            constraints_list = []
+
+            if constraints:
+                for constr in constraints:
+                    if constr['type'] == 'ineq':
+                        constraints_list.append({
+                            'type': 'ineq',
+                            'fun': lambda x: constr['fun'](x)
+                        })
+
+            result = minimize(objective_func, initial_guess, bounds=bounds, constraints=constraints_list)
+            return {'recommendation': result.x, 'objective_value': result.fun}
+
+    def descriptive_analytics(self, data, analysis_type='summary'):
+        if analysis_type == 'summary':
+            if isinstance(data, pd.DataFrame):
+                return data.describe()
+            else:
+                return pd.DataFrame(data).describe()
+        elif analysis_type == 'correlation':
+            if isinstance(data, pd.DataFrame):
+                return data.corr()
+            else:
+                return np.corrcoef(data)
+        elif analysis_type == 'distribution':
+            if isinstance(data, pd.DataFrame):
+                data.hist(figsize=(10, 8))
+            else:
+                plt.hist(data)
+            plt.tight_layout()
+            plt.show()
+
+# Now let's include the neuromorphic-specific classes that were referenced
+
+class NeuromorphicDataIngestor:
+    def __init__(self, spike_encoding='rate', threshold=0.5):
+        self.spike_encoding = spike_encoding
+        self.threshold = threshold
+
+    def ingest(self, source, encoding_params=None):
+        if isinstance(source, (pd.DataFrame, np.ndarray, list)):
+            return self._convert_to_spikes(source, encoding_params)
+        elif hasattr(source, 'read_spikes'):
+            return source.read_spikes()
+        else:
+            raise ValueError("Unsupported data source type")
+
+    def _convert_to_spikes(self, data, params=None):
+        if params is None:
+            params = {}
+
+        if self.spike_encoding == 'rate':
+            spike_trains = {}
+            time_window = params.get('time_window', 100)  # ms
+            max_rate = params.get('max_rate', 100)  # Hz
+
+            if isinstance(data, pd.DataFrame):
+                for neuron_id in range(len(data)):
+                    value = np.mean([v for v in data.iloc[neuron_id].values if not pd.isna(v)])
+                    rate = float(value) * max_rate / np.max(data.values()) if np.max(data.values()) != 0 else 0
+                    n_spikes = int(rate * time_window / 1000)
+                    spike_trains[neuron_id] = sorted(np.random.uniform(0, time_window, n_spikes)) if n_spikes > 0 else []
+            else:
+                for neuron_id, value in enumerate(data):
+                    if isinstance(data, pd.DataFrame):
+                        value = np.mean(data.iloc[neuron_id].values)
+                    rate = float(value) * max_rate / np.max(data) if np.max(data) != 0 else 0
+                    n_spikes = int(rate * time_window / 1000)
+                    spike_trains[neuron_id] = sorted(np.random.uniform(0, time_window, n_spikes)) if n_spikes > 0 else []
+
+            return spike_trains
+
+        elif self.spike_encoding == 'temporal':
+            spike_trains = {}
+            max_latency = params.get('max_latency', 100)  # ms
+
+            if isinstance(data, pd.DataFrame):
+                values = data.values.flatten()
+            else:
+                values = np.array(data).flatten()
+
+            for neuron_id, value in enumerate(values):
+                if np.max(values) > 0:
+                    latency = max_latency * (1 - float(value)/np.max(values))
+                else:
+                    latency = max_latency
+                spike_trains[neuron_id] = [latency] if latency < max_latency else []
+
+            return spike_trains
+
+        else:
+            raise ValueError(f"Unsupported encoding type: {self.spike_encoding}")
+
+class SpikingNeuralNetworkProcessor:
+    def __init__(self, network_config=None):
+        self.network_config = network_config or {
+            'n_input': 100,
+            'n_hidden': 200,
+            'n_output': 10,
+            'learning_rule': 'stdp',
+            'simulation_time': 100,
+            'dt': 1.0
+        }
+        self.weights = None
+        self.initialize_network()
+
+    def initialize_network(self):
+        n_input = self.network_config['n_input']
+        n_hidden = self.network_config['n_hidden']
+        n_output = self.network_config['n_output']
+
+        self.weights = {
+            'W1': np.random.rand(n_input, n_hidden) * 0.1,
+            'W2': np.random.rand(n_hidden, n_output) * 0.1
+        }
+
+        self.tau_mem = 20.0
+        self.tau_syn = 5.0
+        self.threshold = 1.0
+        self.resting_potential = 0.0
+        self.reset_potential = 0.0
+
+    def process(self, spike_trains):
+        sim_time = self.network_config['simulation_time']
+        dt = self.network_config['dt']
+        time_steps = int(sim_time / dt)
+
+        membrane_potential = {
+            'hidden': np.zeros(self.network_config['n_hidden']),
+            'output': np.zeros(self.network_config['n_output'])
+        }
+        synaptic_current = {
+            'hidden': np.zeros(self.network_config['n_hidden']),
+            'output': np.zeros(self.network_config['n_output'])
+        }
+        output_spikes = {i: [] for i in range(self.network_config['n_output'])}
+
+        input_spike_matrix = self._spike_trains_to_matrix(spike_trains, sim_time, dt)
+
+        for t in range(time_steps):
+            current_time = t * dt
+
+            for layer in ['hidden', 'output']:
+                n_neurons = self.network_config[f'n_{layer[:-1]}'] if layer == 'hidden' else self.network_config['n_output']
+                tau_mem = self.tau_mem
+
+                membrane_potential[layer] += dt/tau_mem * (
+                    - (membrane_potential[layer] - self.resting_potential) +
+                    synaptic_current[layer]
+                )
+
+                spike_indices = np.where(membrane_potential[layer] >= self.threshold)[0]
+                for i in spike_indices:
+                    if layer == 'output':
+                        output_spikes[i].append(current_time)
+                    membrane_potential[layer][i] = self.reset_potential
+
+            for layer in ['hidden', 'output']:
+                synaptic_current[layer] *= np.exp(-dt / self.tau_syn)
+
+            if t < input_spike_matrix.shape[1]:
+                input_spikes = input_spike_matrix[:, t]
+                if np.any(input_spikes):
+                    synaptic_current['hidden'] += np.dot(self.weights['W1'].T, input_spikes)
+
+            hidden_spikes = (membrane_potential['hidden'] >= self.threshold).astype(float)
+            if np.any(hidden_spikes):
+                synaptic_current['output'] += np.dot(self.weights['W2'].T, hidden_spikes)
+
+        return output_spikes
+
+    def _spike_trains_to_matrix(self, spike_trains, sim_time, dt):
+        n_neurons = max(spike_trains.keys()) + 1 if spike_trains else 0
+        time_bins = int(sim_time / dt)
+        spike_matrix = np.zeros((n_neurons, time_bins))
+
+        for neuron_id, spike_times in spike_trains.items():
+           
